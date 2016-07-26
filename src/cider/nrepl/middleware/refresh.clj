@@ -42,12 +42,20 @@
       (update-in [::track/load] #(remove load-disabled? %))
       (update-in [::track/unload] #(remove unload-disabled? %))))
 
+(defn resolved-symbol
+  [s]
+  (some-> s u/as-sym resolve))
+
+(defn- symbol-loaded?
+  [the-var]
+  (and the-var
+       (var? the-var)))
+
 (defn- resolve-and-invoke
   [sym {:keys [session] :as msg}]
-  (let [the-var (some-> sym u/as-sym resolve)]
+  (let [the-var (resolved-symbol sym)]
 
-    (when (or (nil? the-var)
-              (not (var? the-var)))
+    (when-not (symbol-loaded? the-var)
       (throw (IllegalArgumentException.
               (format "%s is not resolvable as a var" sym))))
 
